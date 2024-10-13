@@ -14,46 +14,46 @@ var (
 	ErrUserExist = errors.New("user already exists")
 )
 
-const CreateUserCommandName Name = "CreateUserCommand"
+const SaveUserName Name = "SaveUser"
 
-type CreateUserCommand struct {
+type SaveUser struct {
 	Ctx      context.Context
 	Login    string
 	Password string
 }
 
-func (c CreateUserCommand) GetName() Name {
-	return CreateUserCommandName
+func (c SaveUser) GetName() Name {
+	return SaveUserName
 }
 
-type CreateUserCommandHandler struct {
+type SaveUserHandler struct {
 	repo     domain.EventRepository
 	config   *config.Config
 	eventBus *event.Bus
 }
 
-func (h CreateUserCommandHandler) Execute(c Command) (interface{}, error) {
+func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 	salt := h.config.Salt
-	cmd := c.(CreateUserCommand)
+	cmd := c.(SaveUser)
 
-	if h.repo.HasEvent(cmd.Ctx, cmd.Login, domain.CreateUser) {
+	if h.repo.HasEvent(cmd.Ctx, cmd.Login, domain.SaveUser) {
 		return nil, ErrUserExist
 	}
 
-	u := dto.CreateUser{
+	u := dto.SaveUser{
 		Login:        cmd.Login,
 		PasswordHash: utils.GetHash(cmd.Password, salt),
 	}
 
 	if err := h.repo.Save(cmd.Ctx, domain.Event{
 		RootID:  u.Login,
-		Action:  domain.CreateUser,
+		Action:  domain.SaveUser,
 		Payload: u,
 	}); err != nil {
 		return nil, err
 	}
 
-	err := h.eventBus.Publish(event.CreateUserEvent{
+	err := h.eventBus.Publish(event.SaveUser{
 		Ctx:  cmd.Ctx,
 		User: u,
 	})
@@ -61,12 +61,12 @@ func (h CreateUserCommandHandler) Execute(c Command) (interface{}, error) {
 	return u, err
 }
 
-func NewCreateUserCommandHandler(
+func NewSaveUserHandler(
 	repo domain.EventRepository,
 	config *config.Config,
 	eventBus *event.Bus,
-) *CreateUserCommandHandler {
-	return &CreateUserCommandHandler{
+) *SaveUserHandler {
+	return &SaveUserHandler{
 		repo,
 		config,
 		eventBus,

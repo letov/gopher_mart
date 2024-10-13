@@ -2,8 +2,15 @@ package test
 
 import (
 	"context"
+	"go.uber.org/fx"
+	"go.uber.org/fx/fxtest"
+	"gopher_mart/internal/application/command"
+	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
+	"gopher_mart/internal/infrastructure/handler"
+	"gopher_mart/internal/infrastructure/router"
+	"testing"
 )
 
 func NewConfig() *config.Config {
@@ -56,4 +63,36 @@ func NewUserRepo() *UserRepo {
 		us: make(map[string]domain.User),
 	}
 	return ur
+}
+
+func injectTestApp() fx.Option {
+	return fx.Provide(
+		NewConfig,
+
+		NewUserRepo,
+		fx.Annotate(func(r *UserRepo) *UserRepo {
+			return r
+		}, fx.As(new(domain.UserRepository))),
+
+		NewEventRepo,
+
+		fx.Annotate(func(r *EventRepo) *EventRepo {
+			return r
+		}, fx.As(new(domain.EventRepository))),
+
+		event.NewSaveUserHandler,
+		event.NewBus,
+
+		command.NewBus,
+		command.NewSaveUserHandler,
+
+		handler.NewList,
+		router.NewMux,
+	)
+}
+
+func intTest(t *testing.T, r interface{}) {
+	app := fxtest.New(t, injectTestApp(), fx.Invoke(r))
+	defer app.RequireStop()
+	app.RequireStart()
 }

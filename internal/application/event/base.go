@@ -28,13 +28,13 @@ type Bus struct {
 
 func NewBus(
 	lc fx.Lifecycle,
-	createUserEventHandler *CreateUserEventHandler,
+	saveUserEventHandler *SaveUserHandler,
 ) *Bus {
 	b := &Bus{
 		handlers: make(map[Name][]Handler),
 	}
 
-	b.Subscribe(createUserEventHandler, CreateUserEventName)
+	b.Subscribe(saveUserEventHandler, SaveUserName)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {

@@ -7,7 +7,7 @@ import (
 type Actions string
 
 const (
-	CreateUser Actions = "CreateUser"
+	SaveUser Actions = "SaveUser"
 )
 
 type Event struct {
