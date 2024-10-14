@@ -2,15 +2,15 @@ package event
 
 import (
 	"context"
-	"gopher_mart/internal/application/dto"
-	"gopher_mart/internal/domain"
+	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/infrastructure/repo"
 )
 
 const SaveUserName Name = "SaveUserName"
 
 type SaveUser struct {
 	Ctx  context.Context
-	User dto.SaveUser
+	Data args.SaveUser
 }
 
 func (e SaveUser) GetName() Name {
@@ -18,19 +18,15 @@ func (e SaveUser) GetName() Name {
 }
 
 type SaveUserHandler struct {
-	repo domain.UserRepository
+	repo repo.User
 }
 
 func (h SaveUserHandler) Handle(e Event) {
 	event := e.(SaveUser)
-	u := event.User
-	_ = h.repo.Save(event.Ctx, domain.User{
-		Login:        u.Login,
-		PasswordHash: u.PasswordHash,
-	})
+	_ = h.repo.Save(event.Ctx, event.Data)
 }
 
-func NewSaveUserHandler(repo domain.UserRepository) *SaveUserHandler {
+func NewSaveUserHandler(repo repo.User) *SaveUserHandler {
 	return &SaveUserHandler{
 		repo,
 	}

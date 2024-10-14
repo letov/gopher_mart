@@ -6,7 +6,8 @@ import (
 
 func newArgs() preConfig {
 	pre := preConfig{
-		Salt: flag.String("s", "", "Salt desc"),
+		Salt:   flag.String("s", "", "Salt desc"),
+		JwtKey: flag.String("j", "", "JwtKey desc"),
 	}
 
 	set := newSetConfig()
@@ -17,11 +18,16 @@ func newArgs() preConfig {
 		switch f.Name {
 		case "s":
 			set.Salt = true
+		case "j":
+			set.JwtKey = true
 		}
 	})
 
 	if !set.Salt {
 		pre.Salt = nil
+	}
+	if !set.JwtKey {
+		pre.JwtKey = nil
 	}
 
 	return pre

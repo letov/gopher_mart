@@ -8,69 +8,83 @@ import (
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
 	"gopher_mart/internal/infrastructure/dto/request"
+	"gopher_mart/internal/infrastructure/dto/response"
 	"gopher_mart/internal/infrastructure/repo"
 	"gopher_mart/internal/utils"
 )
 
 var (
-	ErrUserExist = errors.New("user already exists")
+	ErrIncorrectLoginOrPassword = errors.New("incorrect login or password")
 )
 
-const SaveUserName Name = "SaveUserAction"
+const LoginName Name = "LoginName"
 
-type SaveUser struct {
+type Login struct {
 	Ctx     context.Context
-	Request request.SaveUser
+	Request request.Login
 }
 
-func (c SaveUser) GetName() Name {
-	return SaveUserName
+func (c Login) GetName() Name {
+	return LoginName
 }
 
-type SaveUserHandler struct {
+type LoginHandler struct {
 	config    *config.Config
+	userRepo  repo.User
 	eventRepo repo.Event
 	eventBus  *event.Bus
 }
 
-func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
+func (h LoginHandler) Execute(c Command) (interface{}, error) {
 	salt := h.config.Salt
-	cmd := c.(SaveUser)
+	cmd := c.(Login)
 	hash := utils.GetHash(cmd.Request.Password, salt)
 
-	if h.eventRepo.HasEvent(cmd.Ctx, cmd.Request.Login, domain.SaveUserAction) {
-		return nil, ErrUserExist
-	}
-
-	data := args.SaveUser{
+	data := args.Login{
 		Login:        cmd.Request.Login,
 		PasswordHash: hash,
-		Name:         cmd.Request.Name,
+	}
+
+	if !h.userRepo.Login(cmd.Ctx, data) {
+		return nil, ErrIncorrectLoginOrPassword
 	}
 
 	if err := h.eventRepo.Save(cmd.Ctx, domain.Event{
 		RootID:  data.Login,
-		Action:  domain.SaveUserAction,
+		Action:  domain.LoginAction,
 		Payload: data,
 	}); err != nil {
 		return nil, err
 	}
 
-	err := h.eventBus.Publish(event.SaveUser{
+	if err := h.eventBus.Publish(event.Login{
 		Ctx:  cmd.Ctx,
 		Data: data,
-	})
+	}); err != nil {
+		return nil, err
+	}
 
-	return data, err
+	token, err := utils.GetJwt(h.config.JwtKey)
+	if err != nil {
+		return nil, err
+	}
+
+	result := response.Login{
+		Token: token,
+	}
+
+	return result, err
 }
 
-func NewSaveUserHandler(
+func NewLoginHandler(
 	config *config.Config,
+	userRepo repo.User,
 	eventRepo repo.Event,
 	eventBus *event.Bus,
-) *SaveUserHandler {
-	return &SaveUserHandler{
+) *LoginHandler {
+	return &LoginHandler{
 		config:    config,
+		userRepo:  userRepo,
 		eventRepo: eventRepo,
 		eventBus:  eventBus,
 	}

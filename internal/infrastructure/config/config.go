@@ -18,7 +18,8 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		Salt: getPriorConfigValue(cs, "Salt").(string),
+		Salt:   getPriorConfigValue(cs, "Salt").(string),
+		JwtKey: getPriorConfigValue(cs, "JwtKey").(string),
 	}
 }
 

@@ -20,6 +20,7 @@ func NewMux(hs *handler.List) *chi.Mux {
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/user", func(r chi.Router) {
 			r.Post("/register", hs.Get(handler.SaveUserName))
+			r.Post("/login", hs.Get(handler.LoginName))
 		})
 	})
 

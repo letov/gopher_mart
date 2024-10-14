@@ -12,5 +12,10 @@ func newEnv() preConfig {
 		pre.Salt = &salt
 	}
 
+	jwt, exists := os.LookupEnv("JWT_KEY")
+	if exists {
+		pre.JwtKey = &jwt
+	}
+
 	return pre
 }

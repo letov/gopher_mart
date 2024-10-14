@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrNoHandler = errors.New("no handler for command")
+	ErrNoHandler = errors.New("no handler for route")
 )
 
 type List struct {
@@ -26,6 +26,7 @@ func NewList(cb *command.Bus) *List {
 	handlers := make(map[string]http.HandlerFunc)
 
 	handlers[SaveUserName] = NewSaveUserHandler(cb)
+	handlers[LoginName] = NewLoginHandler(cb)
 
 	return &List{
 		handlers,

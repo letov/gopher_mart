@@ -13,7 +13,8 @@ func newDotenv() preConfig {
 	}
 
 	return preConfig{
-		Salt: getEnv("SALT", ""),
+		Salt:   getEnv("SALT", ""),
+		JwtKey: getEnv("JWT_KEY", ""),
 	}
 }
 

@@ -29,12 +29,14 @@ type Bus struct {
 func NewBus(
 	lc fx.Lifecycle,
 	saveUserHandler *SaveUserHandler,
+	loginHandler *LoginHandler,
 ) *Bus {
 	b := &Bus{
 		handlers: make(map[Name]Handler),
 	}
 
 	b.Register(saveUserHandler, SaveUserName)
+	b.Register(loginHandler, LoginName)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {

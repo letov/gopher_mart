@@ -1,6 +1,6 @@
-package dto
+package request
 
-type SaveUser struct {
+type Login struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }

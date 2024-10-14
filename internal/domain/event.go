@@ -1,22 +1,15 @@
 package domain
 
-import (
-	"context"
-)
-
-type Actions string
+type Action string
 
 const (
-	SaveUser Actions = "SaveUser"
+	SaveUserAction Action = "SaveUserAction"
+	LoginAction    Action = "LoginAction"
 )
 
 type Event struct {
+	ID      int64
 	RootID  string
-	Action  Actions
+	Action  Action
 	Payload interface{}
-}
-
-type EventRepository interface {
-	HasEvent(ctx context.Context, rootID string, action Actions) bool
-	Save(ctx context.Context, e Event) error
 }

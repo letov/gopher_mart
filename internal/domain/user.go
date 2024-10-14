@@ -1,12 +1,7 @@
 package domain
 
-import "context"
-
 type User struct {
+	ID           int64
 	Login        string
 	PasswordHash string
-}
-
-type UserRepository interface {
-	Save(ctx context.Context, u User) error
 }
