@@ -1,0 +1,31 @@
+version: "2.1"
+services:
+  rabbitmq:
+    image: rabbitmq:4.0.2-management-alpine
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=pass
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_USER: my_user
+      POSTGRES_PASSWORD: my_pass
+      POSTGRES_DB: my_db
+    volumes:
+      - postgres_data_vol:/tmp/postgresql/data
+
+volumes:
+  rabbitmq:
+  postgres_data_vol:

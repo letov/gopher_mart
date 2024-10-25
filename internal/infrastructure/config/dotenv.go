@@ -13,8 +13,12 @@ func newDotenv() preConfig {
 	}
 
 	return preConfig{
-		Salt:   getEnv("SALT", ""),
-		JwtKey: getEnv("JWT_KEY", ""),
+		Salt:         getEnv("SALT", ""),
+		JwtKey:       getEnv("JWT_KEY", ""),
+		Ampq:         getEnv("AMPQ", ""),
+		AccrualUrl:   getEnv("ACCRUAL_SYSTEM_ADDRESS", ""),
+		DBConnection: getEnv("DATABASE_URI", ""),
+		Addr:         getEnv("RUN_ADDRESS", ""),
 	}
 }
 

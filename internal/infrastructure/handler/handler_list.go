@@ -27,6 +27,7 @@ func NewList(cb *command.Bus) *List {
 
 	handlers[SaveUserName] = NewSaveUserHandler(cb)
 	handlers[LoginName] = NewLoginHandler(cb)
+	handlers[CalcAccrualName] = NewCalcAccrualHandler(cb)
 
 	return &List{
 		handlers,

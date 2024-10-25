@@ -1,16 +1,20 @@
 package utils
 
 import (
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/go-chi/jwtauth"
+	"gopher_mart/internal/application/dto/result"
 	"time"
 )
 
-func GetJwt(secret string) (string, error) {
+func GetJwt(secret string, login result.Login) (string, error) {
 	createAt := time.Now().Unix()
 	expireAt := time.Now().Add(time.Minute * 10)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"c_at": createAt,
-		"e_at": expireAt,
+	tokenAuth := jwtauth.New("HS256", []byte(secret), nil)
+
+	_, tokenString, err := tokenAuth.Encode(map[string]interface{}{
+		"c_at":    createAt,
+		"e_at":    expireAt,
+		"user_id": login.UserID,
 	})
-	return token.SignedString([]byte(secret))
+	return tokenString, err
 }

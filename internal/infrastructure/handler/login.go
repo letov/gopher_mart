@@ -27,6 +27,10 @@ func NewLoginHandler(cb *command.Bus) http.HandlerFunc {
 
 		var dto request.Login
 		err = json.Unmarshal(data, &dto)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		cmd := command.Login{
 			Ctx:     ctx,
