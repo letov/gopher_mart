@@ -38,7 +38,10 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 	cmd := c.(SaveUser)
 	hash := utils.GetHash(cmd.Request.Password, salt)
 
-	if h.eventRepo.HasEvent(cmd.Ctx, cmd.Request.Login, domain.SaveUserAction) {
+	he, err := h.eventRepo.HasEvent(cmd.Ctx, cmd.Request.Login, domain.SaveUserAction, 0)
+	if err != nil {
+		return nil, err
+	} else if he {
 		return nil, ErrUserExist
 	}
 
@@ -56,7 +59,7 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 		return nil, err
 	}
 
-	err := h.eventBus.Publish(event.SaveUser{
+	err = h.eventBus.Publish(event.SaveUser{
 		Ctx:  cmd.Ctx,
 		Data: data,
 	})

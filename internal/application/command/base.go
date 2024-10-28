@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 	"sync"
 )
 
@@ -24,15 +25,18 @@ type Handler interface {
 type Bus struct {
 	sync.RWMutex
 	handlers map[Name]Handler
+	log      *zap.SugaredLogger
 }
 
 func NewBus(
 	lc fx.Lifecycle,
 	saveUserHandler *SaveUserHandler,
 	loginHandler *LoginHandler,
+	log *zap.SugaredLogger,
 ) *Bus {
 	b := &Bus{
 		handlers: make(map[Name]Handler),
+		log:      log,
 	}
 
 	b.Register(saveUserHandler, SaveUserName)
@@ -61,5 +65,9 @@ func (b *Bus) Execute(c Command) (interface{}, error) {
 	if !ok {
 		return nil, ErrNoHandler
 	}
-	return h.Execute(c)
+	res, err := h.Execute(c)
+	if err != nil {
+		b.log.Warn(err)
+	}
+	return res, err
 }

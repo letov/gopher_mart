@@ -21,8 +21,7 @@ type Order interface {
 
 type Event interface {
 	Save(ctx context.Context, e domain.Event) error
-	HasEvent(ctx context.Context, rootID string, action domain.Action) bool
-	HasEventWithDuration(ctx context.Context, rootID string, action domain.Action, duration time.Duration) bool
+	HasEvent(ctx context.Context, rootID string, action domain.Action, durationSec time.Duration) (bool, error)
 }
 
 type Operation interface {

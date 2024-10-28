@@ -9,6 +9,7 @@ import (
 	"gopher_mart/internal/infrastructure/handler"
 	"gopher_mart/internal/infrastructure/httpserver"
 	"gopher_mart/internal/infrastructure/logger"
+	"gopher_mart/internal/infrastructure/openapi"
 	"gopher_mart/internal/infrastructure/queue"
 	"gopher_mart/internal/infrastructure/repo"
 	"gopher_mart/internal/infrastructure/router"
@@ -20,7 +21,9 @@ func InjectApp() fx.Option {
 		logger.NewLogger,
 		queue.NewRabbit,
 		httpserver.NewHttpServer,
+		openapi.NewApiServer,
 		router.NewMux,
+		router.NewOpenApi,
 
 		event.NewBus,
 		event.NewSaveUserHandler,

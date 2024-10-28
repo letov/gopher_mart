@@ -4,6 +4,10 @@ import "time"
 
 type Action string
 
+func (a *Action) String() string {
+	return string(*a)
+}
+
 const (
 	SaveUserAction    Action = "SAVE_USER"
 	LoginAction       Action = "LOGIN"

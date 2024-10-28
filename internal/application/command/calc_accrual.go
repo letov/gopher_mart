@@ -45,12 +45,15 @@ func (h CalcAccrualHandler) Execute(c Command) (interface{}, error) {
 
 	orderId := strconv.FormatInt(cmd.Request.OrderID, 10)
 
-	if h.eventRepo.HasEventWithDuration(
+	he, err := h.eventRepo.HasEvent(
 		cmd.Ctx,
 		orderId,
 		domain.CalcAccrualAction,
-		5*time.Minute,
-	) {
+		300*time.Second,
+	)
+	if err != nil {
+		return nil, err
+	} else if he {
 		return nil, ErrTooMoreTries
 	}
 
@@ -67,7 +70,7 @@ func (h CalcAccrualHandler) Execute(c Command) (interface{}, error) {
 		return nil, err
 	}
 
-	err := h.eventBus.Publish(event.CalcAccrual{
+	err = h.eventBus.Publish(event.CalcAccrual{
 		Ctx:  cmd.Ctx,
 		Data: data,
 	})

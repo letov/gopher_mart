@@ -34,17 +34,7 @@ func (r EventRepo) Save(ctx context.Context, e domain.Event) error {
 	return nil
 }
 
-func (r EventRepo) HasEvent(ctx context.Context, rootID string, action domain.Action) bool {
-	e, ok := r.es[rootID]
-	return ok && e.Action == action
-}
-
-func (r EventRepo) HasEventWithDuration(
-	ctx context.Context,
-	rootID string,
-	action domain.Action,
-	duration time.Duration,
-) bool {
+func (r EventRepo) HasEvent(ctx context.Context, rootID string, action domain.Action, durationSec time.Duration) bool {
 	e, ok := r.es[rootID]
 	return ok && e.Action == action
 }
