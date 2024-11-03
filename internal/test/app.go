@@ -14,7 +14,7 @@ import (
 func InjectApp() fx.Option {
 	cs := di.GetConstructors()
 
-	// TODO: dirty switch to test implementation, chandes needed
+	// TODO: dirty switch to test implementation, need changes
 	cs[4] = NewHttpClient
 	cs[5] = fx.Annotate(func(h *HttpClient) httpclient.Client {
 		return h
