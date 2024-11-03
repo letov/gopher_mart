@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrUserExist = errors.New("user already exists")
+	ErrUserExists = errors.New("user already exists")
 )
 
 const SaveUserName Name = "SaveUserAction"
@@ -42,7 +42,7 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	} else if he {
-		return nil, ErrUserExist
+		return nil, ErrUserExists
 	}
 
 	data := in.SaveUser{

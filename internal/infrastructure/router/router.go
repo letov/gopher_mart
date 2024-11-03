@@ -36,6 +36,7 @@ func NewMux(
 				r.Use(jwtauth.Authenticator)
 
 				r.Post("/orders", hs.Get(handler.RequestAccrualName))
+				r.Get("/orders", hs.Get(handler.RequestAccrualName))
 			})
 		})
 	})

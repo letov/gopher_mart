@@ -37,7 +37,12 @@ func NewSaveUserHandler(cb *command.Bus) http.HandlerFunc {
 		}
 		_, err = cb.Execute(cmd)
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+			switch err {
+			case command.ErrUserExists:
+				http.Error(res, err.Error(), http.StatusConflict)
+			default:
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 	}

@@ -57,8 +57,8 @@ func Test_SaveUser(t *testing.T) {
 
 				req, _ = http.NewRequest("POST", "/api/user/register", bytes.NewBuffer(data))
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusBadRequest)
-				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrUserExist.Error())
+				assert.Equal(t, rr.Code, http.StatusConflict)
+				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrUserExists.Error())
 
 				userExist, _ := er.HasEvent(ctx, tt.args.Login, domain.SaveUserAction, 0)
 				assert.True(t, userExist)
@@ -70,7 +70,7 @@ func Test_SaveUser(t *testing.T) {
 				req, _ = http.NewRequest("POST", "/api/user/login", bytes.NewBuffer(data))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusForbidden)
+				assert.Equal(t, rr.Code, http.StatusUnauthorized)
 				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrIncorrectLoginOrPassword.Error())
 
 				time.Sleep(time.Millisecond * 200) // UserRepo update async by event

@@ -39,7 +39,12 @@ func NewLoginHandler(cb *command.Bus) http.HandlerFunc {
 
 		result, err := cb.Execute(cmd)
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusForbidden)
+			switch err {
+			case command.ErrIncorrectLoginOrPassword:
+				http.Error(res, err.Error(), http.StatusUnauthorized)
+			default:
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
