@@ -13,7 +13,7 @@ const (
 
 type Order struct {
 	ID        int64
-	OrderID   int64
+	OrderID   string
 	UserID    int64
 	Status    OrderStatus
 	Accrual   int64

@@ -2,21 +2,21 @@ package repo
 
 import (
 	"context"
-	"gopher_mart/internal/application/dto/args"
-	"gopher_mart/internal/application/dto/result"
+	"gopher_mart/internal/application/dto/in"
+	"gopher_mart/internal/application/dto/out"
 	"gopher_mart/internal/domain"
-	"gopher_mart/internal/infrastructure/dto/response"
 	"time"
 )
 
 type User interface {
-	Save(ctx context.Context, su args.SaveUser) error
-	Login(ctx context.Context, l args.Login) (result.Login, error)
+	Save(ctx context.Context, su in.SaveUser) error
+	Login(ctx context.Context, l in.Login) (out.Login, error)
 }
 
 type Order interface {
-	Save(ctx context.Context, su args.CalcAccrual) error
-	UpdateOrder(ctx context.Context, oa response.OrderAccrual) error
+	Get(ctx context.Context, orderId string) (domain.Order, error)
+	Save(ctx context.Context, ra in.RequestAccrual) error
+	UpdateOrder(ctx context.Context, uo in.UpdateOrder) error
 }
 
 type Event interface {

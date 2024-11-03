@@ -33,7 +33,9 @@ func NewMux(
 
 			r.Group(func(r chi.Router) {
 				r.Use(jwtauth.Verifier(tokenAuth))
-				r.Post("/orders", hs.Get(handler.CalcAccrualName))
+				r.Use(jwtauth.Authenticator)
+
+				r.Post("/orders", hs.Get(handler.RequestAccrualName))
 			})
 		})
 	})

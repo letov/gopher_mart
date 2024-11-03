@@ -30,6 +30,7 @@ func NewBus(
 	lc fx.Lifecycle,
 	saveUserEventHandler *SaveUserHandler,
 	loginHandler *LoginHandler,
+	requestAccrualHandler *RequestAccrualHandler,
 ) *Bus {
 	b := &Bus{
 		handlers: make(map[Name][]Handler),
@@ -37,6 +38,7 @@ func NewBus(
 
 	b.Subscribe(saveUserEventHandler, SaveUserName)
 	b.Subscribe(loginHandler, LoginName)
+	b.Subscribe(requestAccrualHandler, RequestAccrualName)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
@@ -63,11 +65,17 @@ func (b *Bus) Publish(e Event) error {
 	b.RLock()
 	hs, ok := b.handlers[e.GetName()]
 	b.RUnlock()
+	var wg sync.WaitGroup
 	if !ok {
 		return ErrNoHandler
 	}
 	for _, h := range hs {
-		go h.Handle(e)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			h.Handle(e)
+		}()
 	}
+	wg.Wait()
 	return nil
 }

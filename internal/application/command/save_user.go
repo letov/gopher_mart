@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"errors"
-	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
@@ -45,7 +45,7 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 		return nil, ErrUserExist
 	}
 
-	data := args.SaveUser{
+	data := in.SaveUser{
 		Login:        cmd.Request.Login,
 		PasswordHash: hash,
 		Name:         cmd.Request.Name,

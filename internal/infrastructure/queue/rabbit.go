@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"gopher_mart/internal/infrastructure/config"
 	"log"
-	"strconv"
+	"os"
 )
 
 type Rabbit struct {
@@ -17,7 +17,7 @@ type Rabbit struct {
 	q    *amqp.Queue
 }
 
-func (r Rabbit) Publish(ctx context.Context, orderId int64) error {
+func (r Rabbit) Publish(ctx context.Context, orderID string) error {
 	return r.ch.PublishWithContext(ctx,
 		"",
 		r.q.Name,
@@ -25,12 +25,12 @@ func (r Rabbit) Publish(ctx context.Context, orderId int64) error {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(strconv.FormatInt(orderId, 10)),
+			Body:        []byte(orderID),
 		},
 	)
 }
 
-func (r Rabbit) RegisterHandler(h CalcAccrualHandler) error {
+func (r Rabbit) RegisterHandler(h RequestAccrualHandler) error {
 	messages, err := r.ch.Consume(
 		r.q.Name,
 		"",
@@ -46,13 +46,12 @@ func (r Rabbit) RegisterHandler(h CalcAccrualHandler) error {
 
 	go func() {
 		for msg := range messages {
-			s := string(msg.Body)
-			orderId, err := strconv.ParseInt(s, 10, 64)
+			orderID := string(msg.Body)
 			if err != nil {
 				r.l.Error(err)
 				return
 			}
-			err = h(orderId)
+			err = h(orderID)
 			if err != nil {
 				r.l.Error(err)
 				return
@@ -84,9 +83,9 @@ func NewRabbit(
 	}
 
 	q, err := ch.QueueDeclare(
-		"calc_accrual",
+		"request_accrual",
 		true,
-		false,
+		os.Getenv("IS_TEST_ENV") == "true",
 		false,
 		false,
 		nil,

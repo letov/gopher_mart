@@ -1,4 +1,4 @@
-package args
+package in
 
 type SaveUser struct {
 	Login        string

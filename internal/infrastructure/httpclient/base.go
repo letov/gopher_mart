@@ -5,6 +5,6 @@ import (
 	"gopher_mart/internal/infrastructure/dto/response"
 )
 
-type OrderAccrual interface {
-	GetAccrual(ctx context.Context, orderId int64) (response.OrderAccrual, error)
+type Client interface {
+	GetAccrual(ctx context.Context, orderID string) (response.OrderAccrual, error)
 }

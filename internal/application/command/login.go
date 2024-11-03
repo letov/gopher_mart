@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"errors"
-	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
@@ -40,7 +40,7 @@ func (h LoginHandler) Execute(c Command) (interface{}, error) {
 	cmd := c.(Login)
 	hash := utils.GetHash(cmd.Request.Password, salt)
 
-	data := args.Login{
+	data := in.Login{
 		Login:        cmd.Request.Login,
 		PasswordHash: hash,
 	}

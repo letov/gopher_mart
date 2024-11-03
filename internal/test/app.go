@@ -2,113 +2,60 @@ package test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
-	"gopher_mart/internal/application/command"
-	"gopher_mart/internal/application/dto/args"
-	"gopher_mart/internal/application/dto/result"
-	"gopher_mart/internal/application/event"
-	"gopher_mart/internal/domain"
-	"gopher_mart/internal/infrastructure/config"
-	"gopher_mart/internal/infrastructure/handler"
-	"gopher_mart/internal/infrastructure/repo"
-	"gopher_mart/internal/infrastructure/router"
+	"gopher_mart/internal/infrastructure/db"
+	"gopher_mart/internal/infrastructure/di"
+	"gopher_mart/internal/infrastructure/httpclient"
 	"testing"
-	"time"
 )
 
-func NewConfig() *config.Config {
-	return &config.Config{
-		Salt:   "some_salt",
-		JwtKey: "some_secret",
-	}
-}
+func InjectApp() fx.Option {
+	cs := di.GetConstructors()
 
-type EventRepo struct {
-	es map[string]domain.Event
-}
+	// TODO: dirty switch to test implementation, chandes needed
+	cs[4] = NewHttpClient
+	cs[5] = fx.Annotate(func(h *HttpClient) httpclient.Client {
+		return h
+	}, fx.As(new(httpclient.Client)))
 
-func (r EventRepo) Save(ctx context.Context, e domain.Event) error {
-	r.es[e.RootID] = e
-	return nil
-}
-
-func (r EventRepo) HasEvent(ctx context.Context, rootID string, action domain.Action, durationSec time.Duration) bool {
-	e, ok := r.es[rootID]
-	return ok && e.Action == action
-}
-
-func (r EventRepo) HasRootId(rootID string) bool { // test only
-	_, ok := r.es[rootID]
-	return ok
-}
-
-func NewEventRepo() *EventRepo {
-	return &EventRepo{
-		es: make(map[string]domain.Event),
-	}
-}
-
-type UserRepo struct {
-	us map[string]args.SaveUser
-}
-
-func (r UserRepo) Save(ctx context.Context, su args.SaveUser) error {
-	r.us[su.Login] = su
-	return nil
-}
-
-func (r UserRepo) Login(ctx context.Context, l args.Login) (result.Login, error) {
-	su, ok := r.us[l.Login]
-	if !ok || su.PasswordHash != l.PasswordHash {
-		return result.Login{}, errors.New("invalid cred")
-	}
-	return result.Login{UserID: 1}, nil
-}
-
-func (r UserRepo) HasUser(login string) bool { // test only
-	_, ok := r.us[login]
-	return ok
-}
-
-func NewUserRepo() *UserRepo {
-	ur := &UserRepo{
-		us: make(map[string]args.SaveUser),
-	}
-	return ur
-}
-
-func injectTestApp() fx.Option {
 	return fx.Provide(
-		NewConfig,
-
-		NewUserRepo,
-		fx.Annotate(func(r *UserRepo) *UserRepo {
-			return r
-		}, fx.As(new(repo.User))),
-
-		NewEventRepo,
-		fx.Annotate(func(r *EventRepo) *EventRepo {
-			return r
-		}, fx.As(new(repo.Event))),
-
-		event.NewBus,
-		event.NewSaveUserHandler,
-		event.NewLoginHandler,
-
-		command.NewBus,
-		command.NewSaveUserHandler,
-		command.NewLoginHandler,
-		command.NewCalcAccrualHandler,
-
-		handler.NewList,
-		router.NewMux,
+		cs...,
 	)
 }
 
 func initTest(t *testing.T, r interface{}) {
-	app := fxtest.New(t, injectTestApp(), fx.Invoke(r))
+	t.Setenv("IS_TEST_ENV", "true")
+	app := fxtest.New(t, InjectApp(), fx.Invoke(r))
 	defer app.RequireStop()
 	app.RequireStart()
+}
+
+func flushDB(ctx context.Context, db *db.DB) error {
+	pool := db.GetPool()
+	query := `SELECT table_name "table" FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name != 'goose_db_version';`
+	rows, err := pool.Query(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	var queries []string
+	for rows.Next() {
+		var table string
+		err = rows.Scan(&table)
+		if err != nil {
+			return err
+		}
+		queries = append(queries, fmt.Sprintf("TRUNCATE %v CASCADE;", table))
+	}
+
+	tx, _ := pool.Begin(ctx)
+	for _, query := range queries {
+		_, err = tx.Exec(ctx, query)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
 }

@@ -2,54 +2,81 @@ package service
 
 import (
 	"context"
-	"gopher_mart/internal/application/dto/args"
+	"errors"
+	"gopher_mart/internal/application/dto/in"
+	"gopher_mart/internal/domain"
+	"gopher_mart/internal/infrastructure/dto/response"
 	"gopher_mart/internal/infrastructure/httpclient"
 	"gopher_mart/internal/infrastructure/queue"
 	"gopher_mart/internal/infrastructure/repo"
 	"time"
 )
 
+var (
+	ErrCantMapOrderStatus = errors.New("can't map order status")
+)
+
 type Accrual struct {
-	client    httpclient.OrderAccrual
-	queue     queue.CalcAccrual
+	client    httpclient.Client
+	queue     queue.RequestAccrual
 	orderRepo repo.Order
 }
 
-func (s Accrual) GetCalcAccrualHandler() queue.CalcAccrualHandler {
-	return func(orderId int64) error {
+func (s Accrual) GetRequestAccrualHandler() queue.RequestAccrualHandler {
+	return func(orderID string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		oa, err := s.client.GetAccrual(ctx, orderId)
+		oa, err := s.client.GetAccrual(ctx, orderID)
 		if err != nil {
 			return err
 		}
-		return s.orderRepo.UpdateOrder(ctx, oa)
+		uo, err := mapper(oa)
+		if err != nil {
+			return err
+		}
+		return s.orderRepo.UpdateOrder(ctx, uo)
 	}
 }
 
-func (s Accrual) SaveOrder(ctx context.Context, data args.CalcAccrual) error {
-	err := s.orderRepo.Save(ctx, data)
-	if err != nil {
-		return err
+func mapper(res response.OrderAccrual) (in.UpdateOrder, error) {
+	var os domain.OrderStatus
+
+	switch res.Status {
+	case response.RegisteredStatus:
+		os = domain.NewStatus
+	case response.InvalidStatus:
+		os = domain.InvalidStatus
+	case response.ProcessedStatus:
+		os = domain.ProcessedStatus
+	case response.ProcessingStatus:
+		os = domain.ProcessingStatus
+	default:
+		return in.UpdateOrder{}, ErrCantMapOrderStatus
 	}
 
-	return s.addRequestToQueue(ctx, data.OrderID)
+	return in.UpdateOrder{
+		OrderID: res.OrderID,
+		Status:  os,
+		Accrual: res.Accrual,
+	}, nil
 }
 
-func (s Accrual) addRequestToQueue(ctx context.Context, orderID int64) error {
-	return s.queue.Publish(ctx, orderID)
+func (s Accrual) AddRequestToQueue(ctx context.Context, data in.RequestAccrual) error {
+	return s.queue.Publish(ctx, data.OrderID)
 }
 
 func NewAccrual(
-	queue queue.CalcAccrual,
+	client httpclient.Client,
+	queue queue.RequestAccrual,
 	orderRepo repo.Order,
 ) *Accrual {
 	a := &Accrual{
-		queue:     queue,
-		orderRepo: orderRepo,
+		client,
+		queue,
+		orderRepo,
 	}
 
-	_ = queue.RegisterHandler(a.GetCalcAccrualHandler())
+	_ = queue.RegisterHandler(a.GetRequestAccrualHandler())
 
 	return a
 }

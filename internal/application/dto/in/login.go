@@ -1,4 +1,4 @@
-package args
+package in
 
 type Login struct {
 	Login        string

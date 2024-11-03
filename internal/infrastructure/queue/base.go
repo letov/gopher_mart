@@ -2,9 +2,9 @@ package queue
 
 import "context"
 
-type CalcAccrualHandler = func(orderId int64) error
+type RequestAccrualHandler = func(orderID string) error
 
-type CalcAccrual interface {
-	Publish(ctx context.Context, orderId int64) error
-	RegisterHandler(h CalcAccrualHandler) error
+type RequestAccrual interface {
+	Publish(ctx context.Context, orderID string) error
+	RegisterHandler(h RequestAccrualHandler) error
 }

@@ -3,74 +3,70 @@ package command
 import (
 	"context"
 	"errors"
-	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
 	"gopher_mart/internal/infrastructure/dto/request"
 	"gopher_mart/internal/infrastructure/repo"
 	"gopher_mart/internal/utils"
-	"strconv"
-	"time"
 )
 
 var (
-	ErrInvalidOrderId = errors.New("invalid order id")
-	ErrTooMoreTries   = errors.New("too more calc accrual tries")
+	ErrInvalidOrderId       = errors.New("invalid order id")
+	ErrRequestAlreadyExists = errors.New("request already exists")
 )
 
-const CalcAccrualName Name = "CalcAccrualName"
+const RequestAccrualName Name = "RequestAccrualName"
 
-type CalcAccrual struct {
+type RequestAccrual struct {
 	Ctx     context.Context
-	Request request.CalcAccrual
+	Request request.RequestAccrual
 	UserID  int64
 }
 
-func (c CalcAccrual) GetName() Name {
-	return CalcAccrualName
+func (c RequestAccrual) GetName() Name {
+	return RequestAccrualName
 }
 
-type CalcAccrualHandler struct {
+type RequestAccrualHandler struct {
 	config    *config.Config
 	eventRepo repo.Event
 	eventBus  *event.Bus
 }
 
-func (h CalcAccrualHandler) Execute(c Command) (interface{}, error) {
-	cmd := c.(CalcAccrual)
-	if utils.Valid(cmd.Request.OrderID) {
+func (h RequestAccrualHandler) Execute(c Command) (interface{}, error) {
+	cmd := c.(RequestAccrual)
+	if !utils.IsValidOrderId(cmd.Request.OrderID) {
 		return nil, ErrInvalidOrderId
 	}
 
-	orderId := strconv.FormatInt(cmd.Request.OrderID, 10)
-
 	he, err := h.eventRepo.HasEvent(
 		cmd.Ctx,
-		orderId,
-		domain.CalcAccrualAction,
-		300*time.Second,
+		cmd.Request.OrderID,
+		domain.RequestAccrualAction,
+		0,
 	)
 	if err != nil {
 		return nil, err
 	} else if he {
-		return nil, ErrTooMoreTries
+		return nil, ErrRequestAlreadyExists
 	}
 
-	data := args.CalcAccrual{
+	data := in.RequestAccrual{
 		OrderID: cmd.Request.OrderID,
 		UserID:  cmd.UserID,
 	}
 
 	if err := h.eventRepo.Save(cmd.Ctx, domain.Event{
-		RootID:  orderId,
-		Action:  domain.CalcAccrualAction,
+		RootID:  cmd.Request.OrderID,
+		Action:  domain.RequestAccrualAction,
 		Payload: data,
 	}); err != nil {
 		return nil, err
 	}
 
-	err = h.eventBus.Publish(event.CalcAccrual{
+	err = h.eventBus.Publish(event.RequestAccrual{
 		Ctx:  cmd.Ctx,
 		Data: data,
 	})
@@ -78,12 +74,12 @@ func (h CalcAccrualHandler) Execute(c Command) (interface{}, error) {
 	return data, err
 }
 
-func NewCalcAccrualHandler(
+func NewRequestAccrualHandler(
 	config *config.Config,
 	eventRepo repo.Event,
 	eventBus *event.Bus,
-) *CalcAccrualHandler {
-	return &CalcAccrualHandler{
+) *RequestAccrualHandler {
+	return &RequestAccrualHandler{
 		config:    config,
 		eventRepo: eventRepo,
 		eventBus:  eventBus,

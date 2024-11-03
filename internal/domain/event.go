@@ -9,9 +9,9 @@ func (a *Action) String() string {
 }
 
 const (
-	SaveUserAction    Action = "SAVE_USER"
-	LoginAction       Action = "LOGIN"
-	CalcAccrualAction Action = "CALC_ACCRUAL"
+	SaveUserAction       Action = "SAVE_USER"
+	LoginAction          Action = "LOGIN"
+	RequestAccrualAction Action = "REQUEST_ACCRUAL"
 )
 
 type Event struct {

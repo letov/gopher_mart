@@ -1,6 +1,12 @@
 package utils
 
-func Valid(number int64) bool {
+import "strconv"
+
+func IsValidOrderId(orderId string) bool {
+	number, err := strconv.ParseInt(orderId, 10, 64)
+	if err != nil {
+		return false
+	}
 	return (number%10+checksum(number/10))%10 == 0
 }
 

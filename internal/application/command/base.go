@@ -32,6 +32,7 @@ func NewBus(
 	lc fx.Lifecycle,
 	saveUserHandler *SaveUserHandler,
 	loginHandler *LoginHandler,
+	requestAccrualHandler *RequestAccrualHandler,
 	log *zap.SugaredLogger,
 ) *Bus {
 	b := &Bus{
@@ -41,6 +42,7 @@ func NewBus(
 
 	b.Register(saveUserHandler, SaveUserName)
 	b.Register(loginHandler, LoginName)
+	b.Register(requestAccrualHandler, RequestAccrualName)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {

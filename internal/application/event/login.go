@@ -2,14 +2,14 @@ package event
 
 import (
 	"context"
-	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/application/dto/in"
 )
 
 const LoginName Name = "LoginNameName"
 
 type Login struct {
 	Ctx  context.Context
-	Data args.Login
+	Data in.Login
 }
 
 func (e Login) GetName() Name {

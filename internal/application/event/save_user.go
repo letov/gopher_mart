@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	"gopher_mart/internal/application/dto/args"
+	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/infrastructure/repo"
 )
 
@@ -10,7 +10,7 @@ const SaveUserName Name = "SaveUserName"
 
 type SaveUser struct {
 	Ctx  context.Context
-	Data args.SaveUser
+	Data in.SaveUser
 }
 
 func (e SaveUser) GetName() Name {
