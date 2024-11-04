@@ -6,13 +6,31 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"gopher_mart/internal/application/dto/in"
-	"gopher_mart/internal/application/dto/out"
+	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/db"
 )
 
 type UserDBRepo struct {
 	pool *pgxpool.Pool
 	log  *zap.SugaredLogger
+}
+
+func (r *UserDBRepo) Get(ctx context.Context, login string) (domain.User, error) {
+	query := `SELECT * FROM public.users WHERE login=@login`
+	args := pgx.NamedArgs{
+		"login": login,
+	}
+
+	var res domain.User
+	err := r.pool.QueryRow(ctx, query, args).Scan(
+		&res.ID,
+		&res.Login,
+		&res.PasswordHash,
+		&res.CreatedAt,
+		&res.UpdatedAt,
+	)
+
+	return res, err
 }
 
 func (r *UserDBRepo) Save(ctx context.Context, su in.SaveUser) error {
@@ -23,28 +41,6 @@ func (r *UserDBRepo) Save(ctx context.Context, su in.SaveUser) error {
 	}
 	_, err := r.pool.Exec(ctx, query, args)
 	return err
-}
-
-func (r *UserDBRepo) Login(ctx context.Context, l in.Login) (out.Login, error) {
-	var (
-		query string
-		args  pgx.NamedArgs
-		id    int64
-	)
-
-	query = `SELECT id FROM public.users WHERE login=@login AND password_hash=@password_hash`
-	args = pgx.NamedArgs{
-		"login":         l.Login,
-		"password_hash": l.PasswordHash,
-	}
-
-	err := r.pool.QueryRow(ctx, query, args).Scan(&id)
-
-	if err != nil {
-		return out.Login{}, err
-	}
-
-	return out.Login{UserID: id}, nil
 }
 
 func NewUserDBRepo(db *db.DB, log *zap.SugaredLogger) *UserDBRepo {

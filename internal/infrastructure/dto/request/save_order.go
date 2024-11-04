@@ -1,5 +1,5 @@
 package request
 
-type RequestAccrual struct {
+type SaveOrder struct {
 	OrderID string `json:"orderId"`
 }

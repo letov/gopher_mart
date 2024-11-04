@@ -35,8 +35,8 @@ func NewMux(
 				r.Use(jwtauth.Verifier(tokenAuth))
 				r.Use(jwtauth.Authenticator)
 
-				r.Post("/orders", hs.Get(handler.RequestAccrualName))
-				r.Get("/orders", hs.Get(handler.RequestAccrualName))
+				r.Post("/orders", hs.Get(handler.SaveOrderName))
+				r.Get("/orders", hs.Get(handler.SaveOrderName))
 			})
 		})
 	})

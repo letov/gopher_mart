@@ -73,7 +73,7 @@ func NewOpenApi(
 												Name: "bearerAuth",
 											},
 										},
-										Handler: hs.Get(handler.RequestAccrualName),
+										Handler: hs.Get(handler.SaveOrderName),
 										Request: &chioas.Request{
 											SchemaRef: "RequestRequestAccrual",
 										},

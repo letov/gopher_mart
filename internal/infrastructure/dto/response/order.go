@@ -9,7 +9,7 @@ const (
 	ProcessedStatus  Status = "PROCESSED"
 )
 
-type OrderAccrual struct {
+type Order struct {
 	OrderID string `json:"order"`
 	Status  Status `json:"status"`
 	Accrual int64  `json:"accrual"`

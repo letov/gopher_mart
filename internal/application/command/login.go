@@ -45,9 +45,8 @@ func (h LoginHandler) Execute(c Command) (interface{}, error) {
 		PasswordHash: hash,
 	}
 
-	login, err := h.userRepo.Login(cmd.Ctx, data)
-
-	if err != nil {
+	user, err := h.userRepo.Get(cmd.Ctx, data.Login)
+	if err != nil || user.PasswordHash != data.PasswordHash {
 		return nil, ErrIncorrectLoginOrPassword
 	}
 
@@ -66,7 +65,7 @@ func (h LoginHandler) Execute(c Command) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := utils.GetJwt(h.config.JwtKey, login)
+	token, err := utils.GetJwt(h.config.JwtKey, user.ID)
 	if err != nil {
 		return nil, err
 	}

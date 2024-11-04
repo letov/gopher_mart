@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/infrastructure/dto/request"
 	"io"
@@ -37,8 +38,8 @@ func NewSaveUserHandler(cb *command.Bus) http.HandlerFunc {
 		}
 		_, err = cb.Execute(cmd)
 		if err != nil {
-			switch err {
-			case command.ErrUserExists:
+			switch {
+			case errors.Is(err, command.ErrUserExists):
 				http.Error(res, err.Error(), http.StatusConflict)
 			default:
 				http.Error(res, err.Error(), http.StatusInternalServerError)

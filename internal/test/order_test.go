@@ -18,7 +18,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 func Test_RequestAccrual(t *testing.T) {
@@ -32,7 +31,7 @@ func Test_RequestAccrual(t *testing.T) {
 		args args
 	}{
 		{
-			name: "request order accrual user test",
+			name: "load order test",
 			args: args{
 				Login:    "login",
 				Password: "password",
@@ -55,55 +54,62 @@ func Test_RequestAccrual(t *testing.T) {
 				ctx := context.Background()
 				_ = flushDB(ctx, db)
 
-				_, _ = cb.Execute(command.SaveUser{
-					Ctx: ctx,
-					Request: request.SaveUser{
-						Login:    tt.args.Login,
-						Password: tt.args.Password,
-						Name:     tt.args.Login,
-					},
+				token := getToken(ctx, cb, request.Login{
+					Login:    tt.args.Login,
+					Password: tt.args.Password,
 				})
-
-				rl, _ := cb.Execute(command.Login{
-					Ctx: ctx,
-					Request: request.Login{
-						Login:    tt.args.Login,
-						Password: tt.args.Password,
-					},
-				})
-
-				token := rl.(response.Login).Token
 
 				invalidOrderId := "123"
-				data, _ := json.Marshal(request.RequestAccrual{
+				data, _ := json.Marshal(request.SaveOrder{
 					OrderID: invalidOrderId,
 				})
 				req, _ := http.NewRequest("POST", "/api/user/orders", bytes.NewBuffer(data))
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 				rr := httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusBadRequest)
+				assert.Equal(t, rr.Code, http.StatusUnprocessableEntity) // неверный формат номера заказа;
 				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrInvalidOrderId.Error())
 
 				validOrderId := "17893729974"
 				accrual := int64(1000)
 
-				h.SetResponse(response.OrderAccrual{
+				h.SetResponse(response.Order{
 					OrderID: validOrderId,
 					Status:  response.RegisteredStatus,
 					Accrual: accrual,
 				})
 
-				data, _ = json.Marshal(request.RequestAccrual{
+				data, _ = json.Marshal(request.SaveOrder{
 					OrderID: validOrderId,
 				})
 				req, _ = http.NewRequest("POST", "/api/user/orders", bytes.NewBuffer(data))
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK)
+				assert.Equal(t, rr.Code, http.StatusAccepted) // новый номер заказа принят в обработку;
 
-				time.Sleep(time.Millisecond * 200) // waiting queue handler processed
+				data, _ = json.Marshal(request.SaveOrder{
+					OrderID: validOrderId,
+				})
+				req, _ = http.NewRequest("POST", "/api/user/orders", bytes.NewBuffer(data))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+				rr = httptest.NewRecorder()
+				mux.ServeHTTP(rr, req)
+				assert.Equal(t, rr.Code, http.StatusOK) // номер заказа уже был загружен этим пользователем;
+
+				newToken := getToken(ctx, cb, request.Login{
+					Login:    "NewLogin",
+					Password: tt.args.Password,
+				})
+				data, _ = json.Marshal(request.SaveOrder{
+					OrderID: validOrderId,
+				})
+				req, _ = http.NewRequest("POST", "/api/user/orders", bytes.NewBuffer(data))
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", newToken))
+				rr = httptest.NewRecorder()
+				mux.ServeHTTP(rr, req)
+				assert.Equal(t, rr.Code, http.StatusConflict) // номер заказа уже был загружен другим пользователем;
+				return
 
 				o, _ := or.Get(ctx, validOrderId)
 				assert.Equal(t, o.Status, domain.NewStatus)

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/domain"
@@ -53,15 +55,17 @@ func Test_SaveUser(t *testing.T) {
 				req, _ := http.NewRequest("POST", "/api/user/register", bytes.NewBuffer(data))
 				rr := httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK)
+				assert.Equal(t, rr.Code, http.StatusOK) // пользователь успешно зарегистрирован и аутентифицирован
 
 				req, _ = http.NewRequest("POST", "/api/user/register", bytes.NewBuffer(data))
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusConflict)
+				assert.Equal(t, rr.Code, http.StatusConflict) //  логин уже занят
 				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrUserExists.Error())
 
-				userExist, _ := er.HasEvent(ctx, tt.args.Login, domain.SaveUserAction, 0)
-				assert.True(t, userExist)
+				_, err := er.GetLast(ctx, tt.args.Login, domain.SaveUserAction)
+				assert.False(t, errors.Is(err, pgx.ErrNoRows))
+
+				time.Sleep(time.Millisecond * 200) // ждем асинхронной обработки событий
 
 				data, _ = json.Marshal(request.Login{
 					Login:    "invalid",
@@ -70,10 +74,8 @@ func Test_SaveUser(t *testing.T) {
 				req, _ = http.NewRequest("POST", "/api/user/login", bytes.NewBuffer(data))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusUnauthorized)
+				assert.Equal(t, rr.Code, http.StatusUnauthorized) // неверная пара логин/пароль
 				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrIncorrectLoginOrPassword.Error())
-
-				time.Sleep(time.Millisecond * 200) // UserRepo update async by event
 
 				data, _ = json.Marshal(request.Login{
 					Login:    tt.args.Login,
@@ -82,7 +84,7 @@ func Test_SaveUser(t *testing.T) {
 				req, _ = http.NewRequest("POST", "/api/user/login", bytes.NewBuffer(data))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK)
+				assert.Equal(t, rr.Code, http.StatusOK) // пользователь успешно аутентифицирован
 				data, _ = io.ReadAll(rr.Body)
 				_ = req.Body.Close()
 				var jr response.Login

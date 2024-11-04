@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/go-chi/jwtauth"
-	"gopher_mart/internal/application/dto/out"
 	"time"
 )
 
@@ -12,7 +11,7 @@ var (
 	ErrInvalidUserId = errors.New("invalid user id")
 )
 
-func GetJwt(secret string, login out.Login) (string, error) {
+func GetJwt(secret string, userID int64) (string, error) {
 	createAt := time.Now().Unix()
 	expireAt := time.Now().Add(time.Minute * 10)
 	tokenAuth := jwtauth.New("HS256", []byte(secret), nil)
@@ -20,7 +19,7 @@ func GetJwt(secret string, login out.Login) (string, error) {
 	_, tokenString, err := tokenAuth.Encode(map[string]interface{}{
 		"c_at":    createAt,
 		"e_at":    expireAt,
-		"user_id": login.UserID,
+		"user_id": userID,
 	})
 	return tokenString, err
 }

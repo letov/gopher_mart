@@ -42,12 +42,12 @@ func GetConstructors() []interface{} {
 		event.NewBus,
 		event.NewSaveUserHandler,
 		event.NewLoginHandler,
-		event.NewRequestAccrualHandler,
+		event.NewSaveOrderHandler,
 
 		command.NewBus,
 		command.NewSaveUserHandler,
 		command.NewLoginHandler,
-		command.NewRequestAccrualHandler,
+		command.NewSaveOrderHandler,
 
 		db.NewDB,
 		repo.NewUserDBRepo,

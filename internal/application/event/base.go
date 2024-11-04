@@ -30,7 +30,7 @@ func NewBus(
 	lc fx.Lifecycle,
 	saveUserEventHandler *SaveUserHandler,
 	loginHandler *LoginHandler,
-	requestAccrualHandler *RequestAccrualHandler,
+	requestAccrualHandler *SaveOrderHandler,
 ) *Bus {
 	b := &Bus{
 		handlers: make(map[Name][]Handler),
@@ -38,7 +38,7 @@ func NewBus(
 
 	b.Subscribe(saveUserEventHandler, SaveUserName)
 	b.Subscribe(loginHandler, LoginName)
-	b.Subscribe(requestAccrualHandler, RequestAccrualName)
+	b.Subscribe(requestAccrualHandler, SaveOrderName)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {

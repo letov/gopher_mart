@@ -2,7 +2,7 @@
 CREATE TYPE "public"."event_action_enum" AS ENUM(
     'SAVE_USER',
     'LOGIN',
-    'REQUEST_ACCRUAL'
+    'SAVE_ORDER'
 );
 
 CREATE TABLE events (

@@ -7,33 +7,33 @@ import (
 	"gopher_mart/internal/infrastructure/repo"
 )
 
-const RequestAccrualName Name = "RequestAccrualName"
+const SaveOrderName Name = "SaveOrderName"
 
-type RequestAccrual struct {
+type SaveOrder struct {
 	Ctx  context.Context
 	Data in.RequestAccrual
 }
 
-func (e RequestAccrual) GetName() Name {
-	return RequestAccrualName
+func (e SaveOrder) GetName() Name {
+	return SaveOrderName
 }
 
-type RequestAccrualHandler struct {
+type SaveOrderHandler struct {
 	service *service.Accrual
 	repo    repo.Order
 }
 
-func (h RequestAccrualHandler) Handle(e Event) {
-	event := e.(RequestAccrual)
+func (h SaveOrderHandler) Handle(e Event) {
+	event := e.(SaveOrder)
 	_ = h.repo.Save(event.Ctx, event.Data)
 	_ = h.service.AddRequestToQueue(event.Ctx, event.Data)
 }
 
-func NewRequestAccrualHandler(
+func NewSaveOrderHandler(
 	service *service.Accrual,
 	repo repo.Order,
-) *RequestAccrualHandler {
-	return &RequestAccrualHandler{
+) *SaveOrderHandler {
+	return &SaveOrderHandler{
 		service,
 		repo,
 	}

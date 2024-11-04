@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/infrastructure/dto/request"
 	"gopher_mart/internal/infrastructure/dto/response"
@@ -39,8 +40,8 @@ func NewLoginHandler(cb *command.Bus) http.HandlerFunc {
 
 		result, err := cb.Execute(cmd)
 		if err != nil {
-			switch err {
-			case command.ErrIncorrectLoginOrPassword:
+			switch {
+			case errors.Is(err, command.ErrIncorrectLoginOrPassword):
 				http.Error(res, err.Error(), http.StatusUnauthorized)
 			default:
 				http.Error(res, err.Error(), http.StatusInternalServerError)

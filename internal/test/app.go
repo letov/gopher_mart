@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
+	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/infrastructure/db"
 	"gopher_mart/internal/infrastructure/di"
+	"gopher_mart/internal/infrastructure/dto/request"
+	"gopher_mart/internal/infrastructure/dto/response"
 	"gopher_mart/internal/infrastructure/httpclient"
 	"testing"
+	"time"
 )
 
 func InjectApp() fx.Option {
@@ -58,4 +62,24 @@ func flushDB(ctx context.Context, db *db.DB) error {
 		}
 	}
 	return tx.Commit(ctx)
+}
+
+func getToken(ctx context.Context, cb *command.Bus, rl request.Login) string {
+	_, _ = cb.Execute(command.SaveUser{
+		Ctx: ctx,
+		Request: request.SaveUser{
+			Login:    rl.Login,
+			Password: rl.Password,
+			Name:     rl.Login,
+		},
+	})
+
+	time.Sleep(time.Millisecond * 200) // ждем асинхронной обработки событий
+
+	res, _ := cb.Execute(command.Login{
+		Ctx:     ctx,
+		Request: rl,
+	})
+
+	return res.(response.Login).Token
 }

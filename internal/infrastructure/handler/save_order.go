@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/infrastructure/dto/request"
 	"gopher_mart/internal/utils"
@@ -11,9 +12,9 @@ import (
 	"time"
 )
 
-const RequestAccrualName string = "RequestAccrualName"
+const SaveOrderName string = "SaveOrderName"
 
-func NewRequestAccrualHandler(cb *command.Bus) http.HandlerFunc {
+func NewSaveOrderHandler(cb *command.Bus) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -25,7 +26,7 @@ func NewRequestAccrualHandler(cb *command.Bus) http.HandlerFunc {
 			return
 		}
 
-		var dto request.RequestAccrual
+		var dto request.SaveOrder
 		err = json.Unmarshal(data, &dto)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
@@ -34,19 +35,30 @@ func NewRequestAccrualHandler(cb *command.Bus) http.HandlerFunc {
 
 		userId, err := utils.GetUserIdFromToken(req.Context())
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusForbidden)
 			return
 		}
 
-		cmd := command.RequestAccrual{
+		cmd := command.SaveOrder{
 			Ctx:     ctx,
 			Request: dto,
 			UserID:  userId,
 		}
 		_, err = cb.Execute(cmd)
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+			switch {
+			case errors.Is(err, command.ErrInvalidOrderId):
+				http.Error(res, err.Error(), http.StatusUnprocessableEntity)
+			case errors.Is(err, command.ErrRequestByThisUserAlreadyExists):
+				return
+			case errors.Is(err, command.ErrRequestByAnotherUserAlreadyExists):
+				http.Error(res, err.Error(), http.StatusConflict)
+			default:
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
+
+		res.WriteHeader(http.StatusAccepted)
 	}
 }

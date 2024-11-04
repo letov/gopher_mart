@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v5"
 	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/domain"
@@ -16,7 +17,7 @@ var (
 	ErrUserExists = errors.New("user already exists")
 )
 
-const SaveUserName Name = "SaveUserAction"
+const SaveUserName Name = "SaveUserName"
 
 type SaveUser struct {
 	Ctx     context.Context
@@ -38,10 +39,11 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 	cmd := c.(SaveUser)
 	hash := utils.GetHash(cmd.Request.Password, salt)
 
-	he, err := h.eventRepo.HasEvent(cmd.Ctx, cmd.Request.Login, domain.SaveUserAction, 0)
-	if err != nil {
+	_, err := h.eventRepo.GetLast(cmd.Ctx, cmd.Request.Login, domain.SaveUserAction)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
-	} else if he {
+	}
+	if err == nil {
 		return nil, ErrUserExists
 	}
 
