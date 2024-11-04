@@ -10,6 +10,7 @@ import (
 	"os"
 )
 
+// NewOpenApi TODO: не все ручки описаны
 func NewOpenApi(
 	hs *handler.List,
 	config *config.Config,
@@ -75,7 +76,7 @@ func NewOpenApi(
 										},
 										Handler: hs.Get(handler.SaveOrderName),
 										Request: &chioas.Request{
-											SchemaRef: "RequestRequestAccrual",
+											SchemaRef: "RequestSaveOrder",
 										},
 										Responses: chioas.Responses{
 											http.StatusOK:         {},
@@ -149,7 +150,7 @@ func NewOpenApi(
 					},
 				},
 				{
-					Name: "RequestRequestAccrual",
+					Name: "RequestSaveOrder",
 					RequiredProperties: []string{
 						"orderId",
 					},

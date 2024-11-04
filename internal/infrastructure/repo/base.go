@@ -13,6 +13,7 @@ type User interface {
 
 type Order interface {
 	Get(ctx context.Context, orderId string) (domain.Order, error)
+	GetByUserId(ctx context.Context, userId int64) ([]domain.Order, error)
 	Save(ctx context.Context, ra in.RequestAccrual) error
 	UpdateOrder(ctx context.Context, uo in.UpdateOrder) error
 }

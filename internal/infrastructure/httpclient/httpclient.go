@@ -20,14 +20,14 @@ type HttpClient struct {
 	config *config.Config
 }
 
-func (h *HttpClient) GetAccrual(ctx context.Context, orderID string) (response.Order, error) {
+func (h *HttpClient) GetAccrual(ctx context.Context, orderID string) (response.AccrualOrder, error) {
 	url := fmt.Sprintf("%v/api/orders/%v", h.config.AccrualUrl, orderID)
 	data, err := h.request(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return response.Order{}, err
+		return response.AccrualOrder{}, err
 	}
 
-	dto := response.Order{}
+	dto := response.AccrualOrder{}
 	err = json.Unmarshal(data, &dto)
 	return dto, err
 }

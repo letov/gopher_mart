@@ -35,6 +35,39 @@ func (r *OrderDBRepo) Get(ctx context.Context, orderId string) (domain.Order, er
 	return res, err
 }
 
+func (r *OrderDBRepo) GetByUserId(ctx context.Context, userId int64) ([]domain.Order, error) {
+	query := `SELECT * FROM public.orders WHERE user_id = @user_id ORDER BY created_at DESC`
+	args := pgx.NamedArgs{
+		"user_id": userId,
+	}
+
+	var res []domain.Order
+	rows, err := r.pool.Query(ctx, query, args)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var r domain.Order
+		err = rows.Scan(
+			&r.ID,
+			&r.OrderID,
+			&r.UserID,
+			&r.Status,
+			&r.Accrual,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
 func (r *OrderDBRepo) Save(ctx context.Context, ra in.RequestAccrual) error {
 	query := `INSERT INTO public.orders (order_id, user_id) VALUES (@order_id, @user_id)`
 	args := pgx.NamedArgs{

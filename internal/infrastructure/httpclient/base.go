@@ -6,5 +6,5 @@ import (
 )
 
 type Client interface {
-	GetAccrual(ctx context.Context, orderID string) (response.Order, error)
+	GetAccrual(ctx context.Context, orderID string) (response.AccrualOrder, error)
 }

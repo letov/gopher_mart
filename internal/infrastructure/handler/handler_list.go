@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"gopher_mart/internal/application/command"
+	"gopher_mart/internal/application/query"
 	"net/http"
 )
 
@@ -22,12 +23,16 @@ func (l List) Get(n string) http.HandlerFunc {
 	return h
 }
 
-func NewList(cb *command.Bus) *List {
+func NewList(
+	cb *command.Bus,
+	qb *query.Bus,
+) *List {
 	handlers := make(map[string]http.HandlerFunc)
 
 	handlers[SaveUserName] = NewSaveUserHandler(cb)
 	handlers[LoginName] = NewLoginHandler(cb)
 	handlers[SaveOrderName] = NewSaveOrderHandler(cb)
+	handlers[GetOrdersName] = NewGetOrdersHandler(qb)
 
 	return &List{
 		handlers,

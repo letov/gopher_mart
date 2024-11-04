@@ -6,14 +6,14 @@ import (
 )
 
 type HttpClient struct {
-	res response.Order
+	res response.AccrualOrder
 }
 
-func (h *HttpClient) SetResponse(res response.Order) {
+func (h *HttpClient) SetResponse(res response.AccrualOrder) {
 	h.res = res
 }
 
-func (h *HttpClient) GetAccrual(ctx context.Context, orderId string) (response.Order, error) {
+func (h *HttpClient) GetAccrual(ctx context.Context, orderId string) (response.AccrualOrder, error) {
 	return h.res, nil
 }
 

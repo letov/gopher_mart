@@ -38,7 +38,7 @@ func (s Accrual) GetRequestAccrualHandler() queue.RequestAccrualHandler {
 	}
 }
 
-func mapper(res response.Order) (in.UpdateOrder, error) {
+func mapper(res response.AccrualOrder) (in.UpdateOrder, error) {
 	var os domain.OrderStatus
 
 	switch res.Status {

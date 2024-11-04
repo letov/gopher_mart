@@ -4,6 +4,7 @@ import (
 	"go.uber.org/fx"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/application/event"
+	"gopher_mart/internal/application/query"
 	"gopher_mart/internal/application/service"
 	"gopher_mart/internal/infrastructure/config"
 	"gopher_mart/internal/infrastructure/db"
@@ -48,6 +49,9 @@ func GetConstructors() []interface{} {
 		command.NewSaveUserHandler,
 		command.NewLoginHandler,
 		command.NewSaveOrderHandler,
+
+		query.NewBus,
+		query.NewGetOrdersHandler,
 
 		db.NewDB,
 		repo.NewUserDBRepo,

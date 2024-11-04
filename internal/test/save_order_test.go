@@ -20,7 +20,7 @@ import (
 	"testing"
 )
 
-func Test_RequestAccrual(t *testing.T) {
+func Test_SaveOrder(t *testing.T) {
 	type args struct {
 		Login    string
 		Password string
@@ -31,7 +31,7 @@ func Test_RequestAccrual(t *testing.T) {
 		args args
 	}{
 		{
-			name: "load order test",
+			name: "save order test",
 			args: args{
 				Login:    "login",
 				Password: "password",
@@ -73,7 +73,7 @@ func Test_RequestAccrual(t *testing.T) {
 				validOrderId := "17893729974"
 				accrual := int64(1000)
 
-				h.SetResponse(response.Order{
+				h.SetResponse(response.AccrualOrder{
 					OrderID: validOrderId,
 					Status:  response.RegisteredStatus,
 					Accrual: accrual,
@@ -109,7 +109,6 @@ func Test_RequestAccrual(t *testing.T) {
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
 				assert.Equal(t, rr.Code, http.StatusConflict) // номер заказа уже был загружен другим пользователем;
-				return
 
 				o, _ := or.Get(ctx, validOrderId)
 				assert.Equal(t, o.Status, domain.NewStatus)
