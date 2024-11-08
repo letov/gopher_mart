@@ -67,14 +67,6 @@ func (h SaveOrderHandler) Execute(c Command) (interface{}, error) {
 		UserID:  cmd.UserID,
 	}
 
-	if err := h.eventRepo.Save(cmd.Ctx, domain.Event{
-		RootID:  cmd.Request.OrderID,
-		Action:  domain.SaveOrderAction,
-		Payload: data,
-	}); err != nil {
-		return nil, err
-	}
-
 	err = h.eventBus.Publish(event.SaveOrder{
 		Ctx:  cmd.Ctx,
 		Data: data,

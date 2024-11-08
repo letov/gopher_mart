@@ -53,14 +53,6 @@ func (h SaveUserHandler) Execute(c Command) (interface{}, error) {
 		Name:         cmd.Request.Name,
 	}
 
-	if err := h.eventRepo.Save(cmd.Ctx, domain.Event{
-		RootID:  data.Login,
-		Action:  domain.SaveUserAction,
-		Payload: data,
-	}); err != nil {
-		return nil, err
-	}
-
 	err = h.eventBus.Publish(event.SaveUser{
 		Ctx:  cmd.Ctx,
 		Data: data,

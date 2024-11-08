@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"gopher_mart/internal/application/command"
+	"gopher_mart/internal/application/service"
 	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/db"
 	"gopher_mart/internal/infrastructure/dto/request"
@@ -21,21 +22,11 @@ import (
 )
 
 func Test_SaveOrder(t *testing.T) {
-	type args struct {
-		Login    string
-		Password string
-	}
-
 	tests := []struct {
 		name string
-		args args
 	}{
 		{
-			name: "save order test",
-			args: args{
-				Login:    "login",
-				Password: "password",
-			},
+			name: "order test",
 		},
 	}
 
@@ -46,17 +37,22 @@ func Test_SaveOrder(t *testing.T) {
 				ur repo.User,
 				er repo.Event,
 				or repo.Order,
+				opr repo.Operation,
 				mux *chi.Mux,
 				db *db.DB,
 				q *queue.Rabbit,
 				h *HttpClient,
+				as *service.Accrual,
 			) {
 				ctx := context.Background()
 				_ = flushDB(ctx, db)
 
+				login := "login"
+				password := "password"
+
 				token := getToken(ctx, cb, request.Login{
-					Login:    tt.args.Login,
-					Password: tt.args.Password,
+					Login:    login,
+					Password: password,
 				})
 
 				invalidOrderId := "123"
@@ -75,7 +71,7 @@ func Test_SaveOrder(t *testing.T) {
 
 				h.SetResponse(response.AccrualOrder{
 					OrderID: validOrderId,
-					Status:  response.RegisteredStatus,
+					Status:  response.ProcessedStatus,
 					Accrual: accrual,
 				})
 
@@ -95,11 +91,11 @@ func Test_SaveOrder(t *testing.T) {
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK) // номер заказа уже был загружен этим пользователем;
+				assert.Equal(t, http.StatusOK, rr.Code) // номер заказа уже был загружен этим пользователем;
 
 				newToken := getToken(ctx, cb, request.Login{
 					Login:    "NewLogin",
-					Password: tt.args.Password,
+					Password: "NewPassword",
 				})
 				data, _ = json.Marshal(request.SaveOrder{
 					OrderID: validOrderId,
@@ -108,11 +104,27 @@ func Test_SaveOrder(t *testing.T) {
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", newToken))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusConflict) // номер заказа уже был загружен другим пользователем;
+				assert.Equal(t, http.StatusConflict, rr.Code) // номер заказа уже был загружен другим пользователем;
 
 				o, _ := or.Get(ctx, validOrderId)
-				assert.Equal(t, o.Status, domain.NewStatus)
-				assert.Equal(t, o.Accrual, accrual)
+				assert.Equal(t, domain.ProcessedStatus, o.Status)
+				assert.Equal(t, accrual, o.Accrual)
+
+				req, _ = http.NewRequest("GET", "/api/user/orders", nil)
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+				rr = httptest.NewRecorder()
+				mux.ServeHTTP(rr, req)
+
+				body := rr.Body.String()
+				var dto []response.Order
+				_ = json.Unmarshal([]byte(body), &dto)
+
+				assert.Equal(t, validOrderId, dto[0].OrderID)
+				assert.Equal(t, o.Accrual, dto[0].Accrual)
+
+				op, _ := opr.GetByUserId(ctx, o.UserID)
+				assert.Equal(t, domain.AddedStatus, op[0].Status)
+				assert.Equal(t, accrual, op[0].Sum)
 			})
 		})
 	}

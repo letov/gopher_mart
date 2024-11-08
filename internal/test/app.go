@@ -1,8 +1,11 @@
 package test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
 	"gopher_mart/internal/application/command"
@@ -11,6 +14,8 @@ import (
 	"gopher_mart/internal/infrastructure/dto/request"
 	"gopher_mart/internal/infrastructure/dto/response"
 	"gopher_mart/internal/infrastructure/httpclient"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -82,4 +87,17 @@ func getToken(ctx context.Context, cb *command.Bus, rl request.Login) string {
 	})
 
 	return res.(response.Login).Token
+}
+
+func createOrder(o response.AccrualOrder, token string, mux *chi.Mux, h *HttpClient) {
+	h.SetResponse(o)
+
+	data, _ := json.Marshal(request.SaveOrder{
+		OrderID: o.OrderID,
+	})
+	req, _ := http.NewRequest("POST", "/api/user/orders", bytes.NewBuffer(data))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	time.Sleep(time.Millisecond * 200) // ждем асинхронной обработки событий
 }

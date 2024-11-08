@@ -2,6 +2,7 @@ package main
 
 import (
 	"go.uber.org/fx"
+	"gopher_mart/internal/application/service"
 	"gopher_mart/internal/infrastructure/di"
 	"gopher_mart/internal/infrastructure/openapi"
 	"net/http"
@@ -10,6 +11,6 @@ import (
 func main() {
 	fx.New(
 		di.InjectApp(),
-		fx.Invoke(func(*http.Server, *openapi.Server) {}),
+		fx.Invoke(func(*http.Server, *openapi.Server, *service.Accrual) {}),
 	).Run()
 }

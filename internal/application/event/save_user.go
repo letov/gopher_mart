@@ -3,31 +3,41 @@ package event
 import (
 	"context"
 	"gopher_mart/internal/application/dto/in"
+	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/repo"
 )
-
-const SaveUserName Name = "SaveUserName"
 
 type SaveUser struct {
 	Ctx  context.Context
 	Data in.SaveUser
 }
 
-func (e SaveUser) GetName() Name {
-	return SaveUserName
+func (e SaveUser) GetAction() domain.Action {
+	return domain.SaveUserAction
 }
 
 type SaveUserHandler struct {
+	bh   *BaseHandler
 	repo repo.User
 }
 
-func (h SaveUserHandler) Handle(e Event) {
+func (h SaveUserHandler) Handle(e Event) error {
 	event := e.(SaveUser)
-	_ = h.repo.Save(event.Ctx, event.Data)
+	err := h.bh.Save(event.Ctx, domain.Event{
+		RootID:  event.Data.Login,
+		Action:  domain.SaveUserAction,
+		Payload: event.Data,
+	})
+	if err != nil {
+		return err
+	}
+
+	return h.repo.Save(event.Ctx, event.Data)
 }
 
-func NewSaveUserHandler(repo repo.User) *SaveUserHandler {
+func NewSaveUserHandler(bh *BaseHandler, repo repo.User) *SaveUserHandler {
 	return &SaveUserHandler{
-		repo,
+		bh:   bh,
+		repo: repo,
 	}
 }

@@ -65,7 +65,7 @@ func (b *Bus) Execute(q Query) (interface{}, error) {
 	}
 	res, err := h.Execute(q)
 	if err != nil {
-		b.log.Warn(err)
+		b.log.Warnw("Error handling query", "name", q.GetName(), "err", err)
 	}
 	return res, err
 }

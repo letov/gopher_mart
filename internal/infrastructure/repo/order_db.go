@@ -78,8 +78,8 @@ func (r *OrderDBRepo) Save(ctx context.Context, ra in.RequestAccrual) error {
 	return err
 }
 
-func (r *OrderDBRepo) UpdateOrder(ctx context.Context, uo in.UpdateOrder) error {
-	query := `UPDATE public.orders SET status = @status, accrual = @accrual WHERE order_id=@order_id`
+func (r *OrderDBRepo) Update(ctx context.Context, uo in.UpdateOrder) error {
+	query := `UPDATE public.orders SET status = @status, accrual=@accrual WHERE order_id=@order_id`
 	args := pgx.NamedArgs{
 		"status":   uo.Status,
 		"accrual":  uo.Accrual,

@@ -33,7 +33,7 @@ func Test_SaveUser(t *testing.T) {
 		args args
 	}{
 		{
-			name: "login user test",
+			name: "user test",
 			args: args{
 				Login:    "login",
 				Password: "password",
@@ -55,12 +55,12 @@ func Test_SaveUser(t *testing.T) {
 				req, _ := http.NewRequest("POST", "/api/user/register", bytes.NewBuffer(data))
 				rr := httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK) // пользователь успешно зарегистрирован и аутентифицирован
+				assert.Equal(t, http.StatusOK, rr.Code) // пользователь успешно зарегистрирован и аутентифицирован
 
 				req, _ = http.NewRequest("POST", "/api/user/register", bytes.NewBuffer(data))
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusConflict) //  логин уже занят
-				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrUserExists.Error())
+				assert.Equal(t, http.StatusConflict, rr.Code) //  логин уже занят
+				assert.Equal(t, command.ErrUserExists.Error(), strings.TrimSpace(rr.Body.String()))
 
 				_, err := er.GetLast(ctx, tt.args.Login, domain.SaveUserAction)
 				assert.False(t, errors.Is(err, pgx.ErrNoRows))
@@ -74,8 +74,8 @@ func Test_SaveUser(t *testing.T) {
 				req, _ = http.NewRequest("POST", "/api/user/login", bytes.NewBuffer(data))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusUnauthorized) // неверная пара логин/пароль
-				assert.Equal(t, strings.TrimSpace(rr.Body.String()), command.ErrIncorrectLoginOrPassword.Error())
+				assert.Equal(t, http.StatusUnauthorized, rr.Code) // неверная пара логин/пароль
+				assert.Equal(t, command.ErrIncorrectLoginOrPassword.Error(), strings.TrimSpace(rr.Body.String()))
 
 				data, _ = json.Marshal(request.Login{
 					Login:    tt.args.Login,
@@ -84,7 +84,7 @@ func Test_SaveUser(t *testing.T) {
 				req, _ = http.NewRequest("POST", "/api/user/login", bytes.NewBuffer(data))
 				rr = httptest.NewRecorder()
 				mux.ServeHTTP(rr, req)
-				assert.Equal(t, rr.Code, http.StatusOK) // пользователь успешно аутентифицирован
+				assert.Equal(t, http.StatusOK, rr.Code) // пользователь успешно аутентифицирован
 				data, _ = io.ReadAll(rr.Body)
 				_ = req.Body.Close()
 				var jr response.Login

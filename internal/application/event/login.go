@@ -3,23 +3,33 @@ package event
 import (
 	"context"
 	"gopher_mart/internal/application/dto/in"
+	"gopher_mart/internal/domain"
 )
-
-const LoginName Name = "LoginNameName"
 
 type Login struct {
 	Ctx  context.Context
 	Data in.Login
 }
 
-func (e Login) GetName() Name {
-	return LoginName
+func (e Login) GetAction() domain.Action {
+	return domain.LoginAction
 }
 
-type LoginHandler struct{}
+type LoginHandler struct {
+	bh *BaseHandler
+}
 
-func (h LoginHandler) Handle(e Event) {}
+func (h LoginHandler) Handle(e Event) error {
+	event := e.(Login)
+	return h.bh.Save(event.Ctx, domain.Event{
+		RootID:  event.Data.Login,
+		Action:  domain.LoginAction,
+		Payload: event.Data,
+	})
+}
 
-func NewLoginHandler() *LoginHandler {
-	return &LoginHandler{}
+func NewLoginHandler(bh *BaseHandler) *LoginHandler {
+	return &LoginHandler{
+		bh,
+	}
 }

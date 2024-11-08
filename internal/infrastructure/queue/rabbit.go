@@ -53,7 +53,7 @@ func (r Rabbit) RegisterHandler(h RequestAccrualHandler) error {
 			}
 			err = h(orderID)
 			if err != nil {
-				r.l.Error(err)
+				r.l.Warn(err)
 				return
 			}
 			err = msg.Ack(false)

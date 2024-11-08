@@ -5,7 +5,6 @@ import (
 	"errors"
 	"gopher_mart/internal/application/dto/in"
 	"gopher_mart/internal/application/event"
-	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/config"
 	"gopher_mart/internal/infrastructure/dto/request"
 	"gopher_mart/internal/infrastructure/dto/response"
@@ -48,14 +47,6 @@ func (h LoginHandler) Execute(c Command) (interface{}, error) {
 	user, err := h.userRepo.Get(cmd.Ctx, data.Login)
 	if err != nil || user.PasswordHash != data.PasswordHash {
 		return nil, ErrIncorrectLoginOrPassword
-	}
-
-	if err := h.eventRepo.Save(cmd.Ctx, domain.Event{
-		RootID:  data.Login,
-		Action:  domain.LoginAction,
-		Payload: data,
-	}); err != nil {
-		return nil, err
 	}
 
 	if err := h.eventBus.Publish(event.Login{

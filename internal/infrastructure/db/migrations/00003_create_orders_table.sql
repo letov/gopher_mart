@@ -2,7 +2,7 @@
 CREATE TYPE "public"."order_statuses_enum" AS ENUM(
     'NEW',
     'INVALID',
-    'PROCESSING'
+    'PROCESSING',
     'PROCESSED'
 );
 

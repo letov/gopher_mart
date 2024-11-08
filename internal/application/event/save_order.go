@@ -3,38 +3,58 @@ package event
 import (
 	"context"
 	"gopher_mart/internal/application/dto/in"
-	"gopher_mart/internal/application/service"
+	"gopher_mart/internal/domain"
+	"gopher_mart/internal/infrastructure/queue"
 	"gopher_mart/internal/infrastructure/repo"
 )
-
-const SaveOrderName Name = "SaveOrderName"
 
 type SaveOrder struct {
 	Ctx  context.Context
 	Data in.RequestAccrual
 }
 
-func (e SaveOrder) GetName() Name {
-	return SaveOrderName
+func (e SaveOrder) GetAction() domain.Action {
+	return domain.SaveOrderAction
 }
 
 type SaveOrderHandler struct {
-	service *service.Accrual
-	repo    repo.Order
+	bh    *BaseHandler
+	repo  repo.Order
+	queue queue.RequestAccrual
 }
 
-func (h SaveOrderHandler) Handle(e Event) {
+func (h SaveOrderHandler) Handle(e Event) error {
 	event := e.(SaveOrder)
-	_ = h.repo.Save(event.Ctx, event.Data)
-	_ = h.service.AddRequestToQueue(event.Ctx, event.Data)
+	err := h.bh.Save(event.Ctx, domain.Event{
+		RootID:  event.Data.OrderID,
+		Action:  domain.SaveOrderAction,
+		Payload: event.Data,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = h.repo.Save(event.Ctx, event.Data)
+	if err != nil {
+		return err
+	}
+
+	err = h.queue.Publish(event.Ctx, event.Data.OrderID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewSaveOrderHandler(
-	service *service.Accrual,
+	bh *BaseHandler,
 	repo repo.Order,
+	queue queue.RequestAccrual,
 ) *SaveOrderHandler {
 	return &SaveOrderHandler{
-		service,
-		repo,
+		bh:    bh,
+		repo:  repo,
+		queue: queue,
 	}
 }

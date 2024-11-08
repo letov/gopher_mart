@@ -69,7 +69,7 @@ func (b *Bus) Execute(c Command) (interface{}, error) {
 	}
 	res, err := h.Execute(c)
 	if err != nil {
-		b.log.Warn(err)
+		b.log.Warnw("Error handling command", "name", c.GetName(), "err", err)
 	}
 	return res, err
 }
