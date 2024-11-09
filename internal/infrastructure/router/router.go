@@ -37,6 +37,8 @@ func NewMux(
 
 				r.Post("/orders", hs.Get(handler.SaveOrderName))
 				r.Get("/orders", hs.Get(handler.GetOrdersName))
+
+				r.Get("/balance", hs.Get(handler.GetBalanceName))
 			})
 		})
 	})

@@ -55,6 +55,7 @@ func GetConstructors() []interface{} {
 
 		query.NewBus,
 		query.NewGetOrdersHandler,
+		query.NewGetBalanceHandler,
 
 		db.NewDB,
 		repo.NewUserDBRepo,

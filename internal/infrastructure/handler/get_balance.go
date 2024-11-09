@@ -3,34 +3,16 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"gopher_mart/internal/application/query"
-	"gopher_mart/internal/domain"
 	"gopher_mart/internal/infrastructure/dto/response"
 	"gopher_mart/internal/utils"
 	"net/http"
 	"time"
 )
 
-const GetOrdersName string = "GetOrdersName"
+const GetBalanceName string = "GetBalanceName"
 
-func mapper(dos []domain.Order) []response.Order {
-	var res []response.Order
-	for _, do := range dos {
-		ro := response.Order{
-			OrderID: do.OrderID,
-			Status:  do.Status,
-		}
-		if do.Accrual > 0 {
-			ro.Accrual = do.Accrual
-		}
-		ro.CreatedAt = do.CreatedAt.Format(time.RFC3339)
-		res = append(res, ro)
-	}
-	return res
-}
-
-func NewGetOrdersHandler(qb *query.Bus) http.HandlerFunc {
+func NewGetBalanceHandler(qb *query.Bus) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -41,23 +23,22 @@ func NewGetOrdersHandler(qb *query.Bus) http.HandlerFunc {
 			return
 		}
 
-		q := query.GetOrders{
+		q := query.GetBalance{
 			Ctx:    ctx,
 			UserID: userId,
 		}
-		os, err := qb.Execute(q)
+		b, err := qb.Execute(q)
 
 		if err != nil {
-			switch {
-			case errors.Is(err, query.ErrHasNoOrders):
-				http.Error(res, err.Error(), http.StatusNoContent)
-			default:
-				http.Error(res, err.Error(), http.StatusInternalServerError)
-			}
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		data := mapper(os.([]domain.Order))
+		ob := b.(response.Balance)
+		data := response.Balance{
+			Current:   ob.Current,
+			Withdrawn: ob.Withdrawn,
+		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)

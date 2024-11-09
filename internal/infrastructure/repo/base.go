@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"gopher_mart/internal/application/dto/in"
+	"gopher_mart/internal/application/dto/out"
 	"gopher_mart/internal/domain"
 )
 
@@ -25,5 +26,6 @@ type Event interface {
 
 type Operation interface {
 	GetByUserId(ctx context.Context, userId int64) ([]domain.Operation, error)
+	GetBalance(ctx context.Context, userId int64) (out.Balance, error)
 	Save(ctx context.Context, ra in.SaveOperation) error
 }

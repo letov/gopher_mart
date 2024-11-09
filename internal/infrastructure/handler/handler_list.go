@@ -33,6 +33,7 @@ func NewList(
 	handlers[LoginName] = NewLoginHandler(cb)
 	handlers[SaveOrderName] = NewSaveOrderHandler(cb)
 	handlers[GetOrdersName] = NewGetOrdersHandler(qb)
+	handlers[GetBalanceName] = NewGetBalanceHandler(qb)
 
 	return &List{
 		handlers,
