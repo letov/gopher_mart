@@ -1,7 +1,6 @@
 package di
 
 import (
-	"go.uber.org/fx"
 	"gopher_mart/internal/application/command"
 	"gopher_mart/internal/application/event"
 	"gopher_mart/internal/application/query"
@@ -16,6 +15,8 @@ import (
 	"gopher_mart/internal/infrastructure/queue"
 	"gopher_mart/internal/infrastructure/repo"
 	"gopher_mart/internal/infrastructure/router"
+
+	"go.uber.org/fx"
 )
 
 func GetConstructors() []interface{} {
